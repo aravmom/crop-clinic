@@ -1,0 +1,365 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Clinic</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f9faf9;
+        color: #1a1a1a;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+        text-align: center;
+        margin-bottom: 6px;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 24px;
+      }
+
+      .box {
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 20px 24px;
+        margin-bottom: 16px;
+      }
+
+      .box h3 {
+        font-size: 1.05rem;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #eee;
+      }
+
+      label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 6px;
+      }
+
+      select, input[type="file"] {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.92rem;
+        background: #fafafa;
+        margin-bottom: 14px;
+      }
+
+      select:focus { outline: none; border-color: #4a8c4a; }
+
+      button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.92rem;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.15s;
+      }
+
+      .btn-green { background: #3d7a3d; color: #fff; }
+      .btn-green:hover { background: #2e6b2e; }
+      .btn-brown { background: #6b4c30; color: #fff; margin-top: 16px; }
+      .btn-brown:hover { background: #553b24; }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 12px;
+        color: #888;
+        font-size: 0.88rem;
+      }
+
+      .loading.show { display: block; }
+
+      .hidden { display: none; }
+
+      .diagnosis-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 8px;
+      }
+
+      .badge-healthy { background: #e6f4e6; color: #2d6a2d; }
+      .badge-diseased { background: #fce8e6; color: #b33a2a; }
+
+      .diagnosis-name {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .diagnosis-crop {
+        font-size: 0.88rem;
+        color: #666;
+        margin-bottom: 18px;
+      }
+
+      .confidence-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #f3f3f3;
+        font-size: 0.88rem;
+      }
+
+      .confidence-row:last-child { border-bottom: none; }
+
+      .conf-label {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding-right: 12px;
+      }
+
+      .conf-bar-wrap {
+        width: 120px;
+        height: 8px;
+        background: #eee;
+        border-radius: 4px;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+
+      .conf-bar {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.4s ease;
+      }
+
+      .conf-bar.high { background: #4a8c4a; }
+      .conf-bar.mid  { background: #d4a017; }
+      .conf-bar.low  { background: #ccc; }
+
+      .conf-pct {
+        width: 50px;
+        text-align: right;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+        margin-left: 10px;
+      }
+
+      .treatment-section { margin-top: 20px; }
+
+      .treatment-section h4 {
+        font-size: 0.92rem;
+        margin-bottom: 10px;
+        padding-top: 16px;
+        border-top: 1px solid #eee;
+      }
+
+      .treatment-text {
+        background: #f7f7f5;
+        border: 1px solid #e8e8e4;
+        border-radius: 8px;
+        padding: 16px;
+        font-size: 0.88rem;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body>
+
+    <h1>🌿 Crop Clinic</h1>
+    <p class="subtitle">Machine learning plant disease detection & treatment</p>
+
+    <!-- Step 1 -->
+    <div class="box">
+      <h3>📸 Step 1 — Upload a leaf image</h3>
+
+      <label for="speciesSelect">Crop species</label>
+      <select id="speciesSelect">
+        <option value="">— Choose a species —</option>
+      </select>
+
+      <label for="imageInput">Leaf photograph</label>
+      <input type="file" id="imageInput" accept="image/*">
+
+      <button class="btn-green" id="predictBtn" disabled>Detect Disease</button>
+      <div class="loading" id="predictLoading">🔬 Analyzing image…</div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="box hidden" id="resultBox">
+      <h3>🩺 Step 2 — Diagnosis & Treatment</h3>
+
+      <div id="diagnosisBadge" class="diagnosis-badge"></div>
+      <div id="diagnosisName" class="diagnosis-name"></div>
+      <div id="diagnosisCrop" class="diagnosis-crop"></div>
+
+      <label>Confidence ratings</label>
+      <div id="confidenceList"></div>
+
+      <button class="btn-brown" id="treatmentBtn">🌱 Get Treatment Steps</button>
+      <div class="loading" id="treatmentLoading">💊 Generating treatment plan…</div>
+
+      <div class="treatment-section hidden" id="treatmentSection">
+        <h4>🧪 Treatment Plan</h4>
+        <div class="treatment-text" id="treatmentText"></div>
+      </div>
+    </div>
+
+    <script>
+      const speciesSelect = document.getElementById("speciesSelect");
+      const imageInput    = document.getElementById("imageInput");
+      const predictBtn    = document.getElementById("predictBtn");
+      const predictLoad   = document.getElementById("predictLoading");
+      const resultBox     = document.getElementById("resultBox");
+      const diagBadge     = document.getElementById("diagnosisBadge");
+      const diagName      = document.getElementById("diagnosisName");
+      const diagCrop      = document.getElementById("diagnosisCrop");
+      const confList      = document.getElementById("confidenceList");
+      const treatmentBtn  = document.getElementById("treatmentBtn");
+      const treatmentLoad = document.getElementById("treatmentLoading");
+      const treatSection  = document.getElementById("treatmentSection");
+      const treatText     = document.getElementById("treatmentText");
+
+      let lastCrop = null;
+      let lastDisease = null;
+
+      // Load species
+      fetch("/api/species")
+        .then(r => r.json())
+        .then(data => {
+          data.species
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .forEach(sp => {
+              const opt = document.createElement("option");
+              opt.value = sp.name;
+              opt.textContent = sp.name.replace(/_/g, " ");
+              speciesSelect.appendChild(opt);
+            });
+        });
+
+      function updateBtn() {
+        predictBtn.disabled = !(speciesSelect.value && imageInput.files.length);
+      }
+      speciesSelect.addEventListener("change", updateBtn);
+      imageInput.addEventListener("change", updateBtn);
+
+      function prettyDisease(cls) {
+        const parts = cls.split("___");
+        return parts.length > 1 ? parts[1].replace(/_/g, " ").trim() : cls;
+      }
+
+      // Predict
+      predictBtn.addEventListener("click", async () => {
+        const file = imageInput.files[0];
+        const species = speciesSelect.value;
+        if (!file || !species) return;
+
+        const form = new FormData();
+        form.append("file", file);
+        form.append("species", species);
+
+        predictBtn.disabled = true;
+        predictLoad.classList.add("show");
+        resultBox.classList.add("hidden");
+        treatSection.classList.add("hidden");
+
+        try {
+          const res = await fetch("/api/predict", { method: "POST", body: form });
+          const data = await res.json();
+          if (!res.ok) { alert(data.error || "Prediction failed"); return; }
+
+          lastCrop = data.crop;
+          lastDisease = data.disease;
+
+          const healthy = data.disease.toLowerCase().includes("healthy");
+          diagBadge.textContent = healthy ? "✓ Healthy" : "⚠ Disease Detected";
+          diagBadge.className = "diagnosis-badge " + (healthy ? "badge-healthy" : "badge-diseased");
+          diagName.textContent = prettyDisease(data.predicted_class);
+          diagCrop.textContent = "Crop: " + data.crop + "  ·  Confidence: " + (data.confidence * 100).toFixed(1) + "%";
+
+          // Build confidence rows
+          let html = "";
+          if (data.top_3) {
+            data.top_3.forEach(p => {
+              const pct = (p.confidence * 100).toFixed(1);
+              const level = pct >= 50 ? "high" : pct >= 15 ? "mid" : "low";
+              html += `
+                <div class="confidence-row">
+                  <span class="conf-label">${prettyDisease(p.class)}</span>
+                  <div class="conf-bar-wrap"><div class="conf-bar ${level}" style="width:${pct}%"></div></div>
+                  <span class="conf-pct">${pct}%</span>
+                </div>`;
+            });
+          }
+          confList.innerHTML = html;
+          resultBox.classList.remove("hidden");
+
+        } catch (err) {
+          console.error(err);
+          alert("Network error during prediction");
+        } finally {
+          predictLoad.classList.remove("show");
+          predictBtn.disabled = false;
+        }
+      });
+
+      // Treatment
+      treatmentBtn.addEventListener("click", async () => {
+        if (!lastCrop || !lastDisease) return;
+
+        treatmentBtn.disabled = true;
+        treatmentLoad.classList.add("show");
+        treatSection.classList.add("hidden");
+
+        try {
+          const res = await fetch("/api/treatment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ crop: lastCrop, disease: lastDisease }),
+          });
+          const data = await res.json();
+          if (!res.ok) { alert(data.error || "Treatment request failed"); return; }
+
+          treatText.textContent = data.treatment;
+          treatSection.classList.remove("hidden");
+
+        } catch (err) {
+          console.error(err);
+          alert("Network error during treatment request");
+        } finally {
+          treatmentLoad.classList.remove("show");
+          treatmentBtn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

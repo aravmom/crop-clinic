@@ -1,0 +1,166 @@
+{
+  "Apple": {
+    "safe_name": "apple",
+    "model_path": "models/apple/model.keras",
+    "class_names_path": "models/apple/class_names.txt",
+    "class_names": [
+      "Apple___Apple_scab",
+      "Apple___Black_rot",
+      "Apple___Cedar_apple_rust",
+      "Apple___healthy"
+    ],
+    "num_classes": 4,
+    "single_class": false
+  },
+  "Cherry_(including_sour)": {
+    "safe_name": "cherry_including_sour",
+    "model_path": "models/cherry_including_sour/model.keras",
+    "class_names_path": "models/cherry_including_sour/class_names.txt",
+    "class_names": [
+      "Cherry_(including_sour)___Powdery_mildew",
+      "Cherry_(including_sour)___healthy"
+    ],
+    "num_classes": 2,
+    "single_class": false
+  },
+  "Corn_(maize)": {
+    "safe_name": "corn_maize",
+    "model_path": "models/corn_maize/model.keras",
+    "class_names_path": "models/corn_maize/class_names.txt",
+    "class_names": [
+      "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+      "Corn_(maize)___Common_rust_",
+      "Corn_(maize)___Northern_Leaf_Blight",
+      "Corn_(maize)___healthy"
+    ],
+    "num_classes": 4,
+    "single_class": false
+  },
+  "Grape": {
+    "safe_name": "grape",
+    "model_path": "models/grape/model.keras",
+    "class_names_path": "models/grape/class_names.txt",
+    "class_names": [
+      "Grape___Black_rot",
+      "Grape___Esca_(Black_Measles)",
+      "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)",
+      "Grape___healthy"
+    ],
+    "num_classes": 4,
+    "single_class": false
+  },
+  "Peach": {
+    "safe_name": "peach",
+    "model_path": "models/peach/model.keras",
+    "class_names_path": "models/peach/class_names.txt",
+    "class_names": [
+      "Peach___Bacterial_spot",
+      "Peach___healthy"
+    ],
+    "num_classes": 2,
+    "single_class": false
+  },
+  "Pepper,_bell": {
+    "safe_name": "pepper_bell",
+    "model_path": "models/pepper_bell/model.keras",
+    "class_names_path": "models/pepper_bell/class_names.txt",
+    "class_names": [
+      "Pepper,_bell___Bacterial_spot",
+      "Pepper,_bell___healthy"
+    ],
+    "num_classes": 2,
+    "single_class": false
+  },
+  "Potato": {
+    "safe_name": "potato",
+    "model_path": "models/potato/model.keras",
+    "class_names_path": "models/potato/class_names.txt",
+    "class_names": [
+      "Potato___Early_blight",
+      "Potato___Late_blight",
+      "Potato___healthy"
+    ],
+    "num_classes": 3,
+    "single_class": false
+  },
+  "Strawberry": {
+    "safe_name": "strawberry",
+    "model_path": "models/strawberry/model.keras",
+    "class_names_path": "models/strawberry/class_names.txt",
+    "class_names": [
+      "Strawberry___Leaf_scorch",
+      "Strawberry___healthy"
+    ],
+    "num_classes": 2,
+    "single_class": false
+  },
+  "Tomato": {
+    "safe_name": "tomato",
+    "model_path": "models/tomato/model.keras",
+    "class_names_path": "models/tomato/class_names.txt",
+    "class_names": [
+      "Tomato___Bacterial_spot",
+      "Tomato___Early_blight",
+      "Tomato___Late_blight",
+      "Tomato___Leaf_Mold",
+      "Tomato___Septoria_leaf_spot",
+      "Tomato___Spider_mites Two-spotted_spider_mite",
+      "Tomato___Target_Spot",
+      "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+      "Tomato___Tomato_mosaic_virus",
+      "Tomato___healthy"
+    ],
+    "num_classes": 10,
+    "single_class": false
+  },
+  "Blueberry": {
+    "safe_name": "blueberry",
+    "model_path": null,
+    "class_names_path": null,
+    "class_names": [
+      "Blueberry___healthy"
+    ],
+    "num_classes": 1,
+    "single_class": true
+  },
+  "Orange": {
+    "safe_name": "orange",
+    "model_path": null,
+    "class_names_path": null,
+    "class_names": [
+      "Orange___Haunglongbing_(Citrus_greening)"
+    ],
+    "num_classes": 1,
+    "single_class": true
+  },
+  "Raspberry": {
+    "safe_name": "raspberry",
+    "model_path": null,
+    "class_names_path": null,
+    "class_names": [
+      "Raspberry___healthy"
+    ],
+    "num_classes": 1,
+    "single_class": true
+  },
+  "Soybean": {
+    "safe_name": "soybean",
+    "model_path": null,
+    "class_names_path": null,
+    "class_names": [
+      "Soybean___healthy"
+    ],
+    "num_classes": 1,
+    "single_class": true
+  },
+  "Squash": {
+    "safe_name": "squash",
+    "model_path": null,
+    "class_names_path": null,
+    "class_names": [
+      "Squash___Powdery_mildew"
+    ],
+    "num_classes": 1,
+    "single_class": true
+  }
+}

@@ -1,0 +1,2 @@
+Pepper,_bell___Bacterial_spot
+Pepper,_bell___healthy
