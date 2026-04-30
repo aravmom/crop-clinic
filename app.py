@@ -1,5 +1,5 @@
 """
-Crop Clinic — Flask backend
+Crop Clinic — FastAPI backend
 Serves per-species plant disease classification models and
 proxies treatment advice from the OpenAI API.
 """
@@ -8,8 +8,27 @@ import os
 import json
 import numpy as np
 import tensorflow as tf
-from flask import Flask, request, jsonify, render_template
+from fastapi import FastAPI, File, Form, UploadFile, HTTPException
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
 from PIL import Image
+import io
+
+# ── Fix for Keras version mismatch (BatchNormalization renorm params) ──
+import keras.src.layers.normalization.batch_normalization as _bn
+_orig_init = _bn.BatchNormalization.__init__
+
+def _patched_init(self, **kwargs):
+    kwargs.pop("renorm", None)
+    kwargs.pop("renorm_clipping", None)
+    kwargs.pop("renorm_momentum", None)
+    _orig_init(self, **kwargs)
+
+_bn.BatchNormalization.__init__ = _patched_init
+# ── End fix ──
+
+from dotenv import load_dotenv
+load_dotenv()
 
 # -----------------------
 # Configuration
@@ -47,7 +66,7 @@ print(f"\nLoaded {len(LOADED_MODELS)} models. "
 # App Setup
 # -----------------------
 
-app = Flask(__name__)
+app = FastAPI(title="Crop Clinic", version="1.0")
 
 # -----------------------
 # Image Preprocessing
@@ -80,16 +99,24 @@ def parse_prediction(class_name: str):
     return crop, disease
 
 # -----------------------
+# Request model for treatment
+# -----------------------
+
+class TreatmentRequest(BaseModel):
+    crop: str
+    disease: str
+
+# -----------------------
 # Routes
 # -----------------------
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+@app.get("/", response_class=HTMLResponse)
+async def home():
+    with open(os.path.join("templates", "index.html"), "r", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read(), media_type="text/html; charset=utf-8")
 
-
-@app.route("/api/species", methods=["GET"])
-def get_species():
+@app.get("/api/species")
+async def get_species():
     """Return the list of available species for the dropdown."""
     species_list = []
     for species_name, cfg in SPECIES_CONFIG.items():
@@ -98,53 +125,42 @@ def get_species():
             "num_classes": cfg["num_classes"],
             "single_class": cfg["single_class"],
         })
-    return jsonify({"species": species_list})
+    return {"species": species_list}
 
 
-@app.route("/api/predict", methods=["POST"])
-def predict():
+@app.post("/api/predict")
+async def predict(file: UploadFile = File(...), species: str = Form(...)):
     """Classify a leaf image using the model for the selected species."""
 
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
+    if species not in SPECIES_CONFIG:
+        raise HTTPException(status_code=400, detail=f"Unknown species: {species}")
 
-    if "species" not in request.form:
-        return jsonify({"error": "No species selected"}), 400
-
-    file = request.files["file"]
-    species_name = request.form["species"]
-
-    if file.filename == "":
-        return jsonify({"error": "No selected file"}), 400
-
-    if species_name not in SPECIES_CONFIG:
-        return jsonify({"error": f"Unknown species: {species_name}"}), 400
-
-    cfg = SPECIES_CONFIG[species_name]
+    cfg = SPECIES_CONFIG[species]
     class_names = cfg["class_names"]
 
     try:
-        image = Image.open(file.stream)
+        contents = await file.read()
+        image = Image.open(io.BytesIO(contents))
         img_array = preprocess_image(image)
 
         # Single-class species — no model needed
         if cfg["single_class"]:
             predicted_class = class_names[0]
             crop, disease = parse_prediction(predicted_class)
-            return jsonify({
+            return {
                 "predicted_class": predicted_class,
                 "confidence": 1.0,
                 "crop": crop,
                 "disease": disease,
                 "prediction_text": f"{crop} — {disease} (100.0%)",
                 "top_3": [{"class": predicted_class, "confidence": 1.0}],
-            })
+            }
 
         # Multi-class species — run model
-        if species_name not in LOADED_MODELS:
-            return jsonify({"error": f"Model not loaded for {species_name}"}), 500
+        if species not in LOADED_MODELS:
+            raise HTTPException(status_code=500, detail=f"Model not loaded for {species}")
 
-        model = LOADED_MODELS[species_name]
+        model = LOADED_MODELS[species]
         predictions = model.predict(img_array, verbose=0)[0]
 
         top_index = int(np.argmax(predictions))
@@ -163,35 +179,31 @@ def predict():
         predicted_class = class_names[top_index]
         crop, disease = parse_prediction(predicted_class)
 
-        return jsonify({
+        return {
             "predicted_class": predicted_class,
             "confidence": top_confidence,
             "crop": crop,
             "disease": disease,
             "prediction_text": f"{crop} — {disease} ({top_confidence * 100:.1f}%)",
             "top_3": top_3,
-        })
+        }
 
+    except HTTPException:
+        raise
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.route("/api/treatment", methods=["POST"])
-def treatment():
+@app.post("/api/treatment")
+async def treatment(req: TreatmentRequest):
     """Get treatment steps from OpenAI for the detected disease."""
-    data = request.get_json()
-    if not data or "crop" not in data or "disease" not in data:
-        return jsonify({"error": "Missing crop or disease"}), 400
 
-    crop = data["crop"]
-    disease = data["disease"]
-
-    if disease.lower() == "healthy":
-        return jsonify({
-            "treatment": f"Your {crop} plant looks healthy! No treatment needed. "
+    if req.disease.lower() == "healthy":
+        return {
+            "treatment": f"Your {req.crop} plant looks healthy! No treatment needed. "
                          f"Continue with regular watering, appropriate fertilisation, "
                          f"and monitoring for early signs of pests or disease."
-        })
+        }
 
     try:
         import openai
@@ -199,11 +211,14 @@ def treatment():
         client = openai.OpenAI()  # reads OPENAI_API_KEY from env
 
         prompt = (
-            f"You are an agricultural expert. A farmer has a {crop} plant "
-            f"diagnosed with {disease}. Provide clear, actionable treatment steps. "
-            f"Include: 1) Immediate actions, 2) Chemical/organic treatment options, "
-            f"3) Prevention tips for the future. Keep it practical and concise."
-        )
+    		f"You are an agricultural expert. A farmer has a {req.crop} plant "
+    		f"diagnosed with {req.disease}. Provide clear, actionable treatment steps. "
+    		f"Include: 1) Immediate actions, 2) Chemical/organic treatment options, "
+    		f"3) Prevention tips for the future. Keep it practical and concise. "
+    		f"Do not use markdown formatting. Write in plain text only. "
+    		f"Do not include any summary, conclusion, or closing statement at the end. "
+    		f"Just list the steps and stop."
+	)
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -213,14 +228,12 @@ def treatment():
         )
 
         treatment_text = response.choices[0].message.content
-        return jsonify({"treatment": treatment_text})
+        return {"treatment": treatment_text}
 
     except ImportError:
-        return jsonify({
-            "error": "OpenAI package not installed. Run: pip install openai"
-        }), 500
+        raise HTTPException(status_code=500, detail="OpenAI package not installed. Run: pip install openai")
     except Exception as e:
-        return jsonify({"error": f"OpenAI API error: {str(e)}"}), 500
+        raise HTTPException(status_code=500, detail=f"OpenAI API error: {str(e)}")
 
 
 # -----------------------
@@ -228,4 +241,5 @@ def treatment():
 # -----------------------
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=5000)
