@@ -5,8 +5,4 @@ tensorflow>=2.16
 pillow>=10.0
 openai>=1.0
 numpy>=1.26
-scikit-learn>=1.8
-matplotlib>=3.10
-jupyter
 python-dotenv
-kaggle
